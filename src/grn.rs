@@ -374,7 +374,7 @@ mod tests {
         grn.set_mrs();
 
         let num_cell_types = 10;
-        let mr_profile = MrProfile::from_random(&grn, num_cell_types, 1.0..2.5, 3.5..5.0);
+        let mr_profile = MrProfile::from_random(&grn, num_cell_types, 1.0..2.5, 3.5..5.0, 42);
         let max_iter = 2000;
         grn.init(&mr_profile, max_iter);
         for gene in grn.genes.iter() {

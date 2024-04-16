@@ -1,14 +1,15 @@
 use ndarray::{s, Array, Array1, Array2, ArrayView2, Axis, NewAxis};
 use ndarray_rand::{
+    rand::{Rng, SeedableRng},
     rand_distr::{Distribution, Normal, Uniform},
     RandomExt,
 };
 use polars::{frame::DataFrame, prelude::NamedFrom, series::Series};
 use pyo3::{pyclass, pymethods};
 use pyo3_polars::PyDataFrame;
+use rand_pcg::Lcg128Xsl64;
 
 use crate::{gene::ConcType, grn::GRN, mrs::MrProfile};
-use ndarray_rand::rand::thread_rng;
 
 #[pyclass]
 pub struct Sim {
@@ -18,6 +19,7 @@ pub struct Sim {
     scale_iter: usize,
     dt: f64,
     noise_s: f64,
+    seed: u64,
 }
 
 #[pymethods]
@@ -30,6 +32,7 @@ impl Sim {
         scale_iter: usize,
         dt: f64,
         noise_s: f64,
+        seed: u64,
     ) -> Self {
         Self {
             grn,
@@ -38,10 +41,12 @@ impl Sim {
             scale_iter,
             dt,
             noise_s,
+            seed,
         }
     }
 
     pub fn simulate(&mut self, mr_profile: &MrProfile) -> PyDataFrame {
+        let mut rng = Lcg128Xsl64::seed_from_u64(self.seed);
         let max_iter = self.num_cells * self.scale_iter + self.safety_iter;
         self.grn.init(mr_profile, max_iter);
         let lambda = Array1::from_iter(self.grn.genes.iter().map(|x| x.read().unwrap().decay));
@@ -50,19 +55,20 @@ impl Sim {
         let computation_shape = (self.grn.genes.len(), self.grn.num_cell_types);
 
         for _ in 0..max_iter {
-            self.iter_ss(&lambda_col, &rand_dist, &computation_shape);
+            self.iter_ss(&lambda_col, &rand_dist, &computation_shape, &mut rng);
         }
 
-        PyDataFrame(self.get_expr_df(mr_profile))
+        PyDataFrame(self.get_expr_df(mr_profile, &mut rng))
     }
 }
 
 impl Sim {
-    fn iter_ss<T: Distribution<f64>>(
+    fn iter_ss<T: Distribution<f64>, R: Rng>(
         &self,
         lambda: &ArrayView2<f64>,
         rand_dist: &T,
         computation_shape: &(usize, usize),
+        rng: &mut R,
     ) {
         let x_vec: Vec<f64> = self
             .grn
@@ -88,8 +94,8 @@ impl Sim {
         let d = lambda * &x;
         let sqrt_d = d.map(|x| x.sqrt());
         let sqrt_dt = self.dt.sqrt();
-        let rnd_p = Array::random_using(*computation_shape, rand_dist, &mut thread_rng());
-        let rnd_d = Array::random_using(*computation_shape, rand_dist, &mut thread_rng());
+        let rnd_p = Array::random_using(*computation_shape, rand_dist, rng);
+        let rnd_d = Array::random_using(*computation_shape, rand_dist, rng);
         // Eq 3 in the paper
         let new_x = &x
             + (&p - &d).mapv_into(|x| x * self.dt)
@@ -99,15 +105,12 @@ impl Sim {
         }
     }
 
-    fn get_expr_df(&self, mr_profile: &MrProfile) -> DataFrame {
+    fn get_expr_df<T: Rng>(&self, mr_profile: &MrProfile, rng: &mut T) -> DataFrame {
         // Sample random timesteps after safety_iter
         let rnd_dist = Uniform::new(0, self.num_cells * self.scale_iter);
-        let rnd_inds: Array2<usize> = Array::random_using(
-            (mr_profile.num_cell_types, self.num_cells),
-            rnd_dist,
-            &mut thread_rng(),
-        )
-        .map(|x| x + self.safety_iter);
+        let rnd_inds: Array2<usize> =
+            Array::random_using((mr_profile.num_cell_types, self.num_cells), rnd_dist, rng)
+                .map(|x| x + self.safety_iter);
         // DF Data
         let mut gene_names: Vec<String> = self
             .grn
@@ -195,8 +198,8 @@ mod tests {
 
         let num_cell_types = 10;
         let num_cells = 200;
-        let mr_profile = MrProfile::from_random(&grn, num_cell_types, 1.0..2.5, 3.5..5.0);
-        let mut sim = Sim::new(grn, num_cells, 150, 10, 0.01, 1.0);
+        let mr_profile = MrProfile::from_random(&grn, num_cell_types, 1.0..2.5, 3.5..5.0, 42);
+        let mut sim = Sim::new(grn, num_cells, 150, 10, 0.01, 1.0, 42);
         let df = sim.simulate(&mr_profile);
         assert!(df.0.get_columns().len() == num_cell_types * num_cells + 1);
         assert!(df.0.get_column_names()[0] == "Genes");

@@ -24,6 +24,7 @@ class Sim:
         scale_iter: int,
         dt: float,
         noise_s: int,
+        seed: int,
     ) -> None: ...
     def simulate(self, mr_profile: MrProfile) -> polars.DataFrame: ...
 
@@ -35,6 +36,7 @@ class MrProfile:
         num_cell_types: int,
         low_range: tuple[SupportsFloat, SupportsFloat],
         high_range: tuple[SupportsFloat, SupportsFloat],
+        seed: int,
     ) -> MrProfile: ...
 
 class NoiseSetting(enum.Enum):
@@ -49,4 +51,6 @@ class NoiseSetting(enum.Enum):
     DS13 = enum.auto()
     DS14 = enum.auto()
 
-def add_technical_noise(expr: npt.NDArray, setting: NoiseSetting) -> npt.NDArray: ...
+def add_technical_noise(
+    expr: npt.NDArray, setting: NoiseSetting, seed: int
+) -> npt.NDArray: ...

@@ -1,6 +1,6 @@
 [package]
 name = "sergio"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [lib]
@@ -17,3 +17,4 @@ numpy = "0.21.0"
 polars = "0.39.1"
 pyo3 = { version = "0.21.1", features = ["extension-module"] }
 pyo3-polars = "0.13.0"
+rand_pcg = "0.3.1"

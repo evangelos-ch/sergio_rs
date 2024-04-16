@@ -61,12 +61,14 @@ grn.set_mrs()
 NUM_CELL_TYPES = 10
 LOW_RANGE = (0, 2)
 HIGH_RANGE = (2, 4)
+SEED = 42
 
 mr_profile = sergio_rs.MrProfile.from_random(
     grn,
     num_cell_types=NUM_CELL_TYPES,
     low_range=LOW_RANGE,
     high_range=HIGH_RANGE,
+    seed=SEED
 )
 ```
 
@@ -80,6 +82,7 @@ NOISE_S = 1
 SAFETY_ITER = 150
 SCALE_ITER = 10
 DT = 0.01
+SEED = 42
 
 sim = sergio_rs.Sim(
     grn,
@@ -88,6 +91,7 @@ sim = sergio_rs.Sim(
     safety_iter=SAFETY_ITER,
     scale_iter=SCALE_ITER,
     dt=DT,
+    seed=SEED,
 )
 data = sim.simulate(mr_profile)
 
@@ -98,7 +102,10 @@ data_np = data.drop("Genes").to_numpy()
 ### Step 4: Add technical noise
 
 ```py
-noisy_data = sergio_rs.add_technical_noise(data_np, sergio_rs.NoiseSetting.DS6)
+SEED = 42
+NOISE_PROFILE = sergio_rs.NoiseSetting.DS6
+
+noisy_data = sergio_rs.add_technical_noise(data_np, NOISE_PROFILE, seed=SEED)
 ```
 
 ### Step 5: Perturb
@@ -114,6 +121,7 @@ perturbed_sim = sergio_rs.Sim(
     safety_iter=SAFETY_ITER,
     scale_iter=SCALE_ITER,
     dt=DT,
+    seed=SEED,
 )
 perturbed_data = sim.simulate(perturbed_mr_profile)
 ```

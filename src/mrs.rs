@@ -2,11 +2,12 @@ use std::collections::HashMap;
 use std::ops::Range;
 
 use ndarray::{Array, Array1};
-use ndarray_rand::rand::thread_rng;
+use ndarray_rand::rand::SeedableRng;
 use ndarray_rand::rand_distr::{Bernoulli, Distribution, Uniform};
 use pyo3::exceptions::PyValueError;
 use pyo3::types::PyType;
 use pyo3::{pyclass, pymethods, Bound, PyResult};
+use rand_pcg::Lcg128Xsl64;
 
 use crate::grn::GRN;
 
@@ -27,6 +28,7 @@ impl MrProfile {
         num_cell_types: usize,
         low_range: (f64, f64),
         high_range: (f64, f64),
+        seed: u64,
     ) -> PyResult<Self> {
         if low_range.0 > low_range.1 {
             return Err(PyValueError::new_err("low_range is invalid."));
@@ -43,6 +45,7 @@ impl MrProfile {
             num_cell_types,
             low_range.0..low_range.1,
             high_range.0..high_range.1,
+            seed,
         ))
     }
 }
@@ -53,8 +56,10 @@ impl MrProfile {
         num_cell_types: usize,
         low_range: Range<f64>,
         high_range: Range<f64>,
+        seed: u64,
     ) -> Self {
         assert!(grn.mrs.len() > 0, "the GRN must have MRs.");
+        let mut rng = Lcg128Xsl64::seed_from_u64(seed);
 
         let mut mr_prod_rates: HashMap<String, Array1<f64>> = HashMap::new();
         let low_high_dist = Bernoulli::new(0.5).unwrap();
@@ -62,10 +67,10 @@ impl MrProfile {
         let high_dist = Uniform::new(high_range.start, high_range.end);
         for mr in grn.mrs.iter() {
             let cts: Array1<f64> = Array::zeros((num_cell_types,)).map(|x: &f64| {
-                if low_high_dist.sample(&mut thread_rng()) {
-                    x + high_dist.sample(&mut thread_rng())
+                if low_high_dist.sample(&mut rng) {
+                    x + high_dist.sample(&mut rng)
                 } else {
-                    x + low_dist.sample(&mut thread_rng())
+                    x + low_dist.sample(&mut rng)
                 }
             });
             mr_prod_rates.insert(mr.read().unwrap().name.clone(), cts);

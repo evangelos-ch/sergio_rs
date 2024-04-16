@@ -1283,6 +1283,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand_pcg"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59cad018caf63deb318e5a4586d99a24424a364f40f1e5778c29aca23f4fc73e"
+dependencies = [
+ "rand_core",
+]
+
+[[package]]
 name = "raw-cpuid"
 version = "11.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1438,7 +1447,7 @@ dependencies = [
 
 [[package]]
 name = "sergio"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ndarray",
  "ndarray-rand",
@@ -1448,6 +1457,7 @@ dependencies = [
  "polars",
  "pyo3",
  "pyo3-polars",
+ "rand_pcg",
 ]
 
 [[package]]
