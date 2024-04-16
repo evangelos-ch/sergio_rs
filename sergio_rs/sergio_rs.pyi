@@ -1,5 +1,5 @@
 import enum
-from typing import SupportsFloat
+from typing import Self, SupportsFloat
 
 import numpy.typing as npt
 import polars
@@ -10,6 +10,7 @@ class GRN:
         self, reg: Gene, tar: Gene, k: float, h: float | None, n: float
     ) -> None: ...
     def set_mrs(self) -> None: ...
+    def ko_perturbation(self, gene_name: str, mr_profile: MrProfile) -> Self: ...
 
 class Gene:
     def __init__(self, name: str, decay: float) -> None: ...
