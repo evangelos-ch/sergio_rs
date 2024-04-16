@@ -7,7 +7,7 @@ use ndarray_rand::{
 use ndarray_stats::{interpolate::Linear, QuantileExt};
 use noisy_float::types::N64;
 use numpy::{PyArray2, PyReadonlyArray2, ToPyArray};
-use pyo3::{pyclass, pyfunction, Python};
+use pyo3::{pyclass, pyfunction, Bound, Python};
 
 #[pyclass]
 pub enum NoiseSetting {
@@ -127,10 +127,10 @@ pub fn py_add_technical_noise<'py>(
     py: Python<'py>,
     expr: PyReadonlyArray2<f64>,
     setting: &NoiseSetting,
-) -> &'py PyArray2<f64> {
+) -> Bound<'py, PyArray2<f64>> {
     let rust_array = expr.as_array();
     let noisy_data = add_technical_noise(&rust_array, setting);
-    noisy_data.to_pyarray(py)
+    noisy_data.to_pyarray_bound(py)
 }
 
 #[cfg(test)]

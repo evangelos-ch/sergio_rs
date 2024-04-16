@@ -8,7 +8,7 @@ pub mod sim;
 use pyo3::{prelude::*, wrap_pyfunction};
 
 #[pymodule]
-fn sergio_rs(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn sergio_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<gene::Gene>()?;
     m.add_class::<interaction::Interaction>()?;
     m.add_class::<grn::GRN>()?;

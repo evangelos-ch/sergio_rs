@@ -6,7 +6,7 @@ use ndarray_rand::rand::thread_rng;
 use ndarray_rand::rand_distr::{Bernoulli, Distribution, Uniform};
 use pyo3::exceptions::PyValueError;
 use pyo3::types::PyType;
-use pyo3::{pyclass, pymethods, PyResult};
+use pyo3::{pyclass, pymethods, Bound, PyResult};
 
 use crate::grn::GRN;
 
@@ -22,7 +22,7 @@ impl MrProfile {
     #[classmethod]
     #[pyo3(name = "from_random")]
     pub fn py_from_random(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         grn: &GRN,
         num_cell_types: usize,
         low_range: (f64, f64),
