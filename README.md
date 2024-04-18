@@ -26,7 +26,7 @@ Additionally, I have added some utility functions to perform perturbations on th
 
 Install sergio_rs from PyPI using:
 
-`pip install sergio-rs`
+`pip install sergio_rs`
 
 ## Usage
 
