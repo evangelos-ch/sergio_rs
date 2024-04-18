@@ -52,6 +52,9 @@ impl Gene {
 impl Gene {
     pub fn calc_prod(&self, regs_conc: &ConcType) -> Array1<f64> {
         if self.is_mr {
+            if self.prod_rates.as_ref().is_none() {
+                panic!("Wtf")
+            }
             return self.prod_rates.as_ref().unwrap().clone();
         }
 

@@ -16,6 +16,7 @@ use crate::grn::GRN;
 pub struct MrProfile {
     pub num_cell_types: usize,
     pub mr_prod_rates: HashMap<String, Array1<f64>>,
+    pub other_prod_rates: HashMap<String, Array1<f64>>,
 }
 
 #[pymethods]
@@ -62,6 +63,7 @@ impl MrProfile {
         let mut rng = Lcg128Xsl64::seed_from_u64(seed);
 
         let mut mr_prod_rates: HashMap<String, Array1<f64>> = HashMap::new();
+        let mut other_prod_rates: HashMap<String, Array1<f64>> = HashMap::new();
         let low_high_dist = Bernoulli::new(0.5).unwrap();
         let low_dist = Uniform::new(low_range.start, low_range.end);
         let high_dist = Uniform::new(high_range.start, high_range.end);
@@ -75,9 +77,24 @@ impl MrProfile {
             });
             mr_prod_rates.insert(mr.read().unwrap().name.clone(), cts);
         }
+        for gene in grn
+            .genes
+            .iter()
+            .filter(|x| !mr_prod_rates.contains_key(&x.read().unwrap().name))
+        {
+            let cts: Array1<f64> = Array::zeros((num_cell_types,)).map(|x: &f64| {
+                if low_high_dist.sample(&mut rng) {
+                    x + high_dist.sample(&mut rng)
+                } else {
+                    x + low_dist.sample(&mut rng)
+                }
+            });
+            other_prod_rates.insert(gene.read().unwrap().name.clone(), cts);
+        }
         Self {
             num_cell_types,
             mr_prod_rates,
+            other_prod_rates,
         }
     }
 }

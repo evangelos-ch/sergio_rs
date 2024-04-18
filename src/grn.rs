@@ -70,11 +70,11 @@ impl GRN {
         let mut clone = self.clone();
         // Remove the gene
         clone.genes.remove(gene_idx);
+        // Remove it from MRs
         let mrs_idx = clone
             .mrs
             .iter()
             .position(|x| x.read().unwrap().name == gene_name);
-        // Remove it from MRs
         if mrs_idx.is_some() {
             clone.mrs.remove(mrs_idx.unwrap());
         };
@@ -106,6 +106,18 @@ impl GRN {
         // Adjust MR Profile
         let mut perturbed_mr_profile = mr_profile.clone();
         perturbed_mr_profile.mr_prod_rates.remove(&gene_name);
+        for mr in &clone.mrs {
+            let mr_name = &mr.read().unwrap().name;
+            if !perturbed_mr_profile.mr_prod_rates.contains_key(mr_name) {
+                let prod_rate = perturbed_mr_profile
+                    .other_prod_rates
+                    .remove(mr_name)
+                    .unwrap();
+                perturbed_mr_profile
+                    .mr_prod_rates
+                    .insert(mr_name.to_owned(), prod_rate);
+            }
+        }
         return (clone, perturbed_mr_profile);
     }
 }
@@ -179,7 +191,7 @@ impl GRN {
                 .mrs
                 .iter()
                 .find(|x| x.read().unwrap().name == *mr)
-                .expect("mr_data should contain prod_rates for MRs and MRs. must be set");
+                .expect("mr_data should contain prod_rates for MRs and MRs must be set");
             assert!(
                 prod_rates.len() == mr_profile.num_cell_types,
                 "prod_rates data must be of length num_cell_types."

@@ -204,4 +204,37 @@ mod tests {
         assert!(df.0.get_columns().len() == num_cell_types * num_cells + 1);
         assert!(df.0.get_column_names()[0] == "Genes");
     }
+
+    #[test]
+    fn test_perturb() {
+        let mut grn = GRN::new();
+        let g1 = Gene::new(String::from("gene1"), 0.8);
+        let g2 = Gene::new(String::from("gene2"), 0.8);
+        let g3 = Gene::new(String::from("gene3"), 0.8);
+        let g4 = Gene::new(String::from("gene4"), 0.8);
+        let g5 = Gene::new(String::from("gene5"), 0.8);
+        let g6 = Gene::new(String::from("gene6"), 0.8);
+        let g7 = Gene::new(String::from("gene7"), 0.8);
+
+        grn.add_interaction(&g1, &g2, 3.0, None, 2);
+        grn.add_interaction(&g4, &g2, 3.0, None, 2);
+        grn.add_interaction(&g7, &g5, 3.0, None, 2);
+        grn.add_interaction(&g2, &g3, 3.0, None, 2);
+        grn.add_interaction(&g5, &g6, 3.0, None, 2);
+        grn.add_interaction(&g3, &g5, 3.0, None, 2);
+
+        grn.set_mrs();
+
+        let num_cells = 200;
+        let num_cell_types = 10;
+        let mr_profile = MrProfile::from_random(&grn, num_cell_types, 1.0..2.5, 3.5..5.0, 42);
+        for gene in &grn.genes {
+            let (perturbed_grn, perturbed_profile) =
+                grn.ko_perturbation(gene.read().unwrap().name.clone(), &mr_profile);
+
+            let mut sim = Sim::new(perturbed_grn, num_cells, 150, 10, 0.01, 1.0, 42);
+            let df = sim.simulate(&perturbed_profile);
+            assert!(df.0.get_columns()[0].len() == 6);
+        }
+    }
 }
