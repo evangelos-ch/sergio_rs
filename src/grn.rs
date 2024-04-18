@@ -102,6 +102,7 @@ impl GRN {
                     .remove(inter_idx.unwrap());
             }
         });
+        clone.set_mrs();
         // Adjust MR Profile
         let mut perturbed_mr_profile = mr_profile.clone();
         perturbed_mr_profile.mr_prod_rates.remove(&gene_name);
